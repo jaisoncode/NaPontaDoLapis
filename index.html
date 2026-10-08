@@ -908,6 +908,108 @@
       text-align: center;
     }
 
+    .comparison-history-block {
+      display: grid;
+      gap: .68rem;
+      margin: 1.1rem 0 1.25rem;
+      padding-top: 1.05rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .comparison-history-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: .8rem;
+    }
+
+    .comparison-history-heading h3 {
+      margin: 0;
+      color: var(--navy);
+      font-size: 1.02rem;
+      letter-spacing: -.02em;
+    }
+
+    .comparison-history-heading p {
+      margin: .18rem 0 0;
+      color: var(--muted);
+      font-size: .79rem;
+    }
+
+    .comparison-history-list {
+      display: grid;
+      gap: .58rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .comparison-history-item {
+      padding: .78rem .86rem;
+      border: 1px solid var(--line);
+      border-radius: .84rem;
+      background: #fbfdff;
+    }
+
+    .comparison-history-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: .65rem;
+    }
+
+    .comparison-history-title {
+      color: var(--ink);
+      font-size: .9rem;
+      font-weight: 850;
+    }
+
+    .comparison-history-meta {
+      display: block;
+      margin-top: .12rem;
+      color: var(--muted);
+      font-size: .75rem;
+    }
+
+    .comparison-choice-badge {
+      flex: 0 0 auto;
+      padding: .28rem .46rem;
+      border-radius: 999px;
+      background: var(--green-soft);
+      color: var(--green);
+      font-size: .7rem;
+      font-weight: 850;
+      text-align: right;
+    }
+
+    .comparison-choice-badge.other {
+      background: #fff3dc;
+      color: #8a5b13;
+    }
+
+    .comparison-history-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .35rem;
+      margin-top: .58rem;
+    }
+
+    .comparison-history-option {
+      padding: .3rem .48rem;
+      border: 1px solid #d7e3ec;
+      border-radius: .52rem;
+      background: #f6fafd;
+      color: var(--muted);
+      font-size: .74rem;
+    }
+
+    .comparison-history-option.selected {
+      border-color: #9ac9b2;
+      background: #effaf2;
+      color: #22633b;
+      font-weight: 750;
+    }
+
     .data-grid {
       display: grid;
       grid-template-columns: minmax(0, 1.2fr) minmax(14rem, .8fr);
@@ -1181,6 +1283,17 @@
       .data-actions button {
         width: 100%;
       }
+
+      .comparison-history-heading,
+      .comparison-history-top {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .comparison-choice-badge {
+        align-self: flex-start;
+        text-align: left;
+      }
     }
   </style>
 </head>
@@ -1295,7 +1408,7 @@ iVBORw0KGgoAAAANSUhEUgAAAiUAAAC3CAYAAADNXC6KAAAQAElEQVR4AeydB6BdRfH/v7Pn3FdSIHSk
         <div>
           <p class="eyebrow">Etapa 2</p>
           <h2 id="historyTitle">Histórico mensal: <span id="historyMonth">este mês</span></h2>
-          <p>Cada mês fica separado automaticamente. Ao escolher uma oferta, informe quantas embalagens deseja comprar.</p>
+          <p>Cada mês fica separado automaticamente. Ao escolher uma oferta, os campos são limpos para a próxima comparação.</p>
         </div>
         <div class="history-summary">
           <span class="history-total">Total: <strong id="historyTotal">R$ 0,00</strong></span>
@@ -1304,6 +1417,17 @@ iVBORw0KGgoAAAANSUhEUgAAAiUAAAC3CAYAAADNXC6KAAAQAElEQVR4AeydB6BdRfH/v7Pn3FdSIHSk
             <button class="ghost-button" id="clearMonthBtn" type="button">Limpar compras do mês</button>
           </div>
         </div>
+      </div>
+      <div class="comparison-history-block">
+        <div class="comparison-history-heading">
+          <div>
+            <h3>Histórico de comparações</h3>
+            <p>Veja as opções analisadas e qual delas foi escolhida em cada decisão.</p>
+          </div>
+          <button class="ghost-button" id="clearComparisonsMonthBtn" type="button">Limpar comparações do mês</button>
+        </div>
+        <ul class="comparison-history-list" id="comparisonHistoryList"></ul>
+        <div class="history-empty" id="comparisonHistoryEmpty">Nenhuma comparação concluída neste mês ainda.</div>
       </div>
       <ul class="purchase-list" id="purchaseList"></ul>
       <div class="history-empty" id="historyEmpty">Nenhuma compra foi salva para este mês ainda.</div>
@@ -1905,6 +2029,9 @@ AAAGSURBVAMALDxudjPv9TwAAAAASUVORK5CYII=
       var historyEmpty = document.getElementById("historyEmpty");
       var historyTotal = document.getElementById("historyTotal");
       var clearMonthBtn = document.getElementById("clearMonthBtn");
+      var comparisonHistoryList = document.getElementById("comparisonHistoryList");
+      var comparisonHistoryEmpty = document.getElementById("comparisonHistoryEmpty");
+      var clearComparisonsMonthBtn = document.getElementById("clearComparisonsMonthBtn");
       var exportPdfBtn = document.getElementById("exportPdfBtn");
       var exportBtn = document.getElementById("exportBtn");
       var importBtn = document.getElementById("importBtn");
@@ -1939,6 +2066,7 @@ AAAGSURBVAMALDxudjPv9TwAAAAASUVORK5CYII=
           activeMonth: currentMonthKey(),
           budgets: {},
           purchases: [],
+          comparisons: [],
           draftProducts: [blankProduct(), blankProduct()]
         };
       }
@@ -1986,6 +2114,59 @@ AAAGSURBVAMALDxudjPv9TwAAAAASUVORK5CYII=
         };
       }
 
+      function normalizedComparison(item) {
+        if (!item || typeof item !== "object" || !isMonthKey(item.month) || !Array.isArray(item.options)) {
+          return null;
+        }
+
+        var options = item.options.map(function (option) {
+          if (!option || typeof option !== "object") {
+            return null;
+          }
+
+          var price = parseBrazilianNumber(option.price);
+          var quantity = parseBrazilianNumber(option.quantity);
+          var unit = ["g", "kg", "ml", "L", "un"].indexOf(option.unit) > -1 ? option.unit : "un";
+          if (!Number.isFinite(price) || price < 0 || !Number.isFinite(quantity) || quantity <= 0) {
+            return null;
+          }
+
+          var category = ["weight", "volume", "unit"].indexOf(option.category) > -1 ? option.category : categoryForUnit(unit);
+          var displayCost = Number(option.displayCost);
+          if (!Number.isFinite(displayCost) || displayCost < 0) {
+            displayCost = price / baseQuantity(quantity, unit) * displayMultiplier(category);
+          }
+
+          return {
+            id: typeof option.id === "string" ? option.id : newId(),
+            name: typeof option.name === "string" ? option.name : "Produto sem nome",
+            price: price,
+            quantity: quantity,
+            unit: unit,
+            category: category,
+            displayCost: displayCost
+          };
+        }).filter(Boolean);
+
+        if (options.length < 2) {
+          return null;
+        }
+
+        var recommendedId = typeof item.recommendedId === "string" ? item.recommendedId : options.slice().sort(function (a, b) {
+          return a.displayCost - b.displayCost;
+        })[0].id;
+        var selectedId = typeof item.selectedId === "string" ? item.selectedId : recommendedId;
+
+        return {
+          id: typeof item.id === "string" ? item.id : newId(),
+          month: item.month,
+          createdAt: item.createdAt || new Date().toISOString(),
+          recommendedId: recommendedId,
+          selectedId: selectedId,
+          options: options
+        };
+      }
+
       function normalizeState(source) {
         var fallback = createInitialState();
         if (!source || typeof source !== "object") {
@@ -2000,12 +2181,14 @@ AAAGSURBVAMALDxudjPv9TwAAAAASUVORK5CYII=
         }
 
         var purchases = Array.isArray(source.purchases) ? source.purchases.map(normalizedPurchase).filter(Boolean) : [];
+        var comparisons = Array.isArray(source.comparisons) ? source.comparisons.map(normalizedComparison).filter(Boolean) : [];
 
         return {
           version: 1,
           activeMonth: isMonthKey(source.activeMonth) ? source.activeMonth : fallback.activeMonth,
           budgets: source.budgets && typeof source.budgets === "object" ? source.budgets : {},
           purchases: purchases,
+          comparisons: comparisons,
           draftProducts: drafts
         };
       }
@@ -2256,6 +2439,12 @@ AAAGSURBVAMALDxudjPv9TwAAAAASUVORK5CYII=
         });
       }
 
+      function selectedMonthComparisons() {
+        return state.comparisons.filter(function (comparison) {
+          return comparison.month === state.activeMonth;
+        });
+      }
+
       function purchaseTotal(purchase) {
         var storedTotal = Number(purchase.totalPrice);
         if (Number.isFinite(storedTotal) && storedTotal >= 0) {
@@ -2346,6 +2535,42 @@ AAAGSURBVAMALDxudjPv9TwAAAAASUVORK5CYII=
         clearMonthBtn.disabled = purchases.length === 0;
       }
 
+      function renderComparisonHistory() {
+        var comparisons = selectedMonthComparisons().slice().sort(function (a, b) {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+
+        comparisonHistoryList.innerHTML = comparisons.map(function (comparison, index) {
+          var recommended = comparison.options.find(function (option) {
+            return option.id === comparison.recommendedId;
+          }) || comparison.options[0];
+          var selected = comparison.options.find(function (option) {
+            return option.id === comparison.selectedId;
+          }) || recommended;
+          var selectedRecommended = selected.id === recommended.id;
+          var badgeText = selectedRecommended ? "Escolha indicada" : "Outra escolha";
+          var options = comparison.options.map(function (option) {
+            var optionLabel = option.name + " • " + money(option.price) + " / " + String(option.quantity).replace(".", ",") + " " + option.unit;
+            return '<span class="comparison-history-option' + (option.id === selected.id ? " selected" : "") + '">' + escapeHTML(optionLabel) + '</span>';
+          }).join("");
+
+          return '<li class="comparison-history-item">' +
+            '<div class="comparison-history-top">' +
+              '<div>' +
+                '<span class="comparison-history-title">Comparação ' + (index + 1) + '</span>' +
+                '<span class="comparison-history-meta">' + escapeHTML(formatDate(comparison.createdAt)) + ' • melhor custo-benefício: ' + escapeHTML(recommended.name) + ' • escolhido: ' + escapeHTML(selected.name) + '</span>' +
+              '</div>' +
+              '<span class="comparison-choice-badge' + (selectedRecommended ? "" : " other") + '">' + badgeText + '</span>' +
+            '</div>' +
+            '<div class="comparison-history-options" aria-label="Opções da comparação">' + options + '</div>' +
+          '</li>';
+        }).join("");
+
+        comparisonHistoryEmpty.hidden = comparisons.length > 0;
+        comparisonHistoryList.hidden = comparisons.length === 0;
+        clearComparisonsMonthBtn.disabled = comparisons.length === 0;
+      }
+
       function renderComparisonEmpty() {
         comparisonResult.innerHTML = '<div class="result-empty">Preencha pelo menos duas opções e clique em <strong>Comparar custo-benefício</strong>.</div>';
       }
@@ -2420,9 +2645,62 @@ AAAGSURBVAMALDxudjPv9TwAAAAASUVORK5CYII=
           '</div>' +
           '<div>' +
             '<span class="choice-total">Total: <strong id="purchaseChoiceTotal">' + money(product.price * packages) + '</strong></span>' +
-            '<button class="primary-button" type="button" data-add-selected-product>Adicionar compra</button>' +
+            '<button class="ghost-button" type="button" data-cancel-selected-product>Cancelar escolha</button>' +
+            '<button class="primary-button" type="button" data-add-selected-product>Salvar compra e iniciar nova comparação</button>' +
           '</div>' +
         '</section>';
+      }
+
+      function comparisonOptionSnapshot(item) {
+        return {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          unit: item.unit,
+          category: item.category,
+          displayCost: item.displayCost
+        };
+      }
+
+      function comparisonOptionsSnapshot(items) {
+        return items.map(comparisonOptionSnapshot);
+      }
+
+      function recordComparisonSelection(product) {
+        var now = new Date().toISOString();
+        var existingId = selectedProductForPurchase && selectedProductForPurchase.comparisonId;
+        var comparison = existingId ? state.comparisons.find(function (item) {
+          return item.id === existingId;
+        }) : null;
+        var options = comparisonOptionsSnapshot(lastComparison);
+
+        if (comparison) {
+          comparison.month = state.activeMonth;
+          comparison.createdAt = now;
+          comparison.recommendedId = lastComparison[0].id;
+          comparison.selectedId = product.id;
+          comparison.options = options;
+          return comparison;
+        }
+
+        comparison = {
+          id: newId(),
+          month: state.activeMonth,
+          createdAt: now,
+          recommendedId: lastComparison[0].id,
+          selectedId: product.id,
+          options: options
+        };
+        state.comparisons.push(comparison);
+        return comparison;
+      }
+
+      function clearComparisonFieldsForNext() {
+        activeProductTab = 0;
+        state.draftProducts = [blankProduct(), blankProduct()];
+        saveState();
+        renderProductRows();
       }
 
       function selectProductForPurchase(id) {
@@ -2435,11 +2713,16 @@ AAAGSURBVAMALDxudjPv9TwAAAAASUVORK5CYII=
           return;
         }
 
+        var comparison = recordComparisonSelection(product);
         selectedProductForPurchase = {
           id: product.id,
-          purchaseQuantity: 1
+          purchaseQuantity: 1,
+          comparisonId: comparison.id,
+          product: comparisonOptionSnapshot(product)
         };
+        clearComparisonFieldsForNext();
         renderComparison(lastComparison);
+        renderComparisonHistory();
 
         var quantityField = document.getElementById("purchasePackageCount");
         if (quantityField) {
@@ -2455,7 +2738,7 @@ AAAGSURBVAMALDxudjPv9TwAAAAASUVORK5CYII=
 
         var amount = Math.max(1, Math.floor(Number(value) || 1));
         selectedProductForPurchase.purchaseQuantity = amount;
-        var product = lastComparison.find(function (item) {
+        var product = selectedProductForPurchase.product || lastComparison.find(function (item) {
           return item.id === selectedProductForPurchase.id;
         });
         var total = document.getElementById("purchaseChoiceTotal");
@@ -2465,6 +2748,11 @@ AAAGSURBVAMALDxudjPv9TwAAAAASUVORK5CYII=
       }
 
       function compareProducts() {
+        if (selectedProductForPurchase) {
+          showToast("Finalize ou cancele a escolha atual antes de iniciar outra comparação.");
+          return;
+        }
+
         collectDraftFromDOM();
 
         var products = state.draftProducts.map(normalizeProduct);
@@ -2496,13 +2784,30 @@ AAAGSURBVAMALDxudjPv9TwAAAAASUVORK5CYII=
         renderComparison(lastComparison);
       }
 
+      function cancelSelectedProduct() {
+        selectedProductForPurchase = null;
+        lastComparison = [];
+        saveState();
+        renderComparisonEmpty();
+        showToast("Escolha cancelada. Os campos já estão prontos para outra comparação.");
+      }
+      function resetComparisonForNext() {
+        selectedProductForPurchase = null;
+        lastComparison = [];
+        activeProductTab = 0;
+        state.draftProducts = [blankProduct(), blankProduct()];
+        saveState();
+        renderProductRows();
+        renderComparisonEmpty();
+      }
+
       function addSelectedProductToHistory() {
         if (!selectedProductForPurchase) {
           showToast("Escolha uma opção e informe a quantidade de embalagens.");
           return;
         }
 
-        var product = lastComparison.find(function (item) {
+        var product = selectedProductForPurchase.product || lastComparison.find(function (item) {
           return item.id === selectedProductForPurchase.id;
         });
 
@@ -2513,6 +2818,27 @@ AAAGSURBVAMALDxudjPv9TwAAAAASUVORK5CYII=
 
         var purchaseQuantity = Math.max(1, Math.floor(Number(selectedProductForPurchase.purchaseQuantity) || 1));
         var totalPrice = product.price * purchaseQuantity;
+        var createdAt = new Date().toISOString();
+        var comparisonOptions = lastComparison.map(function (item) {
+          return {
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            unit: item.unit,
+            category: item.category,
+            displayCost: item.displayCost
+          };
+        });
+
+        state.comparisons.push({
+          id: newId(),
+          month: state.activeMonth,
+          createdAt: createdAt,
+          recommendedId: lastComparison[0].id,
+          selectedId: product.id,
+          options: comparisonOptions
+        });
 
         state.purchases.push({
           id: newId(),
@@ -2525,19 +2851,18 @@ AAAGSURBVAMALDxudjPv9TwAAAAASUVORK5CYII=
           displayCost: product.displayCost,
           purchaseQuantity: purchaseQuantity,
           totalPrice: totalPrice,
-          createdAt: new Date().toISOString()
+          createdAt: createdAt
         });
 
-        selectedProductForPurchase = null;
-        saveState();
+        resetComparisonForNext();
         renderBudget();
         renderHistory();
-        renderComparison(lastComparison);
+        renderComparisonHistory();
 
         if (budgetForActiveMonth() === 0) {
-          showToast("Compra salva. Agora defina o orçamento do mês para acompanhar o limite.");
+          showToast("Compra e comparação salvas. Os campos foram limpos para a próxima comparação.");
         } else {
-          showToast(purchaseQuantity + " embalagem(ns) de " + product.name + " foram salvas em " + formatMonth(state.activeMonth) + ".");
+          showToast(purchaseQuantity + " embalagem(ns) de " + product.name + " salvas. Nova comparação pronta.");
         }
       }
 
@@ -2602,12 +2927,34 @@ AAAGSURBVAMALDxudjPv9TwAAAAASUVORK5CYII=
         showToast("Compras do mês removidas.");
       }
 
+      function clearComparisonsCurrentMonth() {
+        var count = selectedMonthComparisons().length;
+        if (!count) {
+          return;
+        }
+
+        var label = count === 1 ? "a comparação" : "as " + count + " comparações";
+        if (!window.confirm("Deseja remover " + label + " de " + formatMonth(state.activeMonth) + "? As compras serão preservadas.")) {
+          return;
+        }
+
+        state.comparisons = state.comparisons.filter(function (comparison) {
+          return comparison.month !== state.activeMonth;
+        });
+        saveState();
+        renderComparisonHistory();
+        showToast("Histórico de comparações do mês removido.");
+      }
+
       function monthsWithRecords() {
         var budgetMonths = Object.keys(state.budgets).filter(isMonthKey);
         var purchaseMonths = state.purchases.map(function (purchase) {
           return purchase.month;
         }).filter(isMonthKey);
-        var months = budgetMonths.concat(purchaseMonths).filter(function (month, index, array) {
+        var comparisonMonths = state.comparisons.map(function (comparison) {
+          return comparison.month;
+        }).filter(isMonthKey);
+        var months = budgetMonths.concat(purchaseMonths, comparisonMonths).filter(function (month, index, array) {
           return array.indexOf(month) === index;
         }).sort(function (a, b) {
           return b.localeCompare(a);
@@ -2672,12 +3019,43 @@ AAAGSURBVAMALDxudjPv9TwAAAAASUVORK5CYII=
           }).slice().sort(function (a, b) {
             return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
           });
+          var comparisons = state.comparisons.filter(function (comparison) {
+            return comparison.month === month;
+          }).slice().sort(function (a, b) {
+            return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          });
           var budget = Number(state.budgets[month]) || 0;
           var spent = spentForMonth(month);
           var remaining = budget - spent;
 
           lines.push("MES: " + formatMonth(month));
           lines.push("Orcamento: " + money(budget) + " | Gasto: " + money(spent) + " | Saldo: " + (budget ? money(remaining) : "Nao definido"));
+          lines.push("Comparacoes realizadas: " + comparisons.length);
+          if (!comparisons.length) {
+            lines.push("Nenhuma comparacao concluida neste mes.");
+          }
+
+          comparisons.forEach(function (comparison, index) {
+            var recommended = comparison.options.find(function (option) {
+              return option.id === comparison.recommendedId;
+            }) || comparison.options[0];
+            var selected = comparison.options.find(function (option) {
+              return option.id === comparison.selectedId;
+            }) || recommended;
+            var choiceLabel = selected.id === recommended.id ? "melhor custo-beneficio" : "outra opcao escolhida";
+            var comparisonTitle = "Comparacao " + (index + 1) + " - escolhida: " + selected.name + " (" + choiceLabel + ")";
+            wrapPdfLine(comparisonTitle, 88).forEach(function (line) {
+              lines.push(line);
+            });
+            var optionSummary = comparison.options.map(function (option) {
+              return option.name + " - " + money(option.price) + " / " + String(option.quantity).replace(".", ",") + " " + option.unit + " - " + unitText(option);
+            }).join(" | ");
+            wrapPdfLine("Opcoes analisadas: " + optionSummary, 88).forEach(function (line) {
+              lines.push(line);
+            });
+          });
+
+          lines.push("");
           lines.push("Compras registradas: " + purchases.length);
 
           if (!purchases.length) {
@@ -2829,6 +3207,7 @@ AAAGSURBVAMALDxudjPv9TwAAAAASUVORK5CYII=
         renderProductRows();
         renderBudget();
         renderHistory();
+        renderComparisonHistory();
       }
 
       monthPicker.addEventListener("change", function () {
@@ -2836,11 +3215,17 @@ AAAGSURBVAMALDxudjPv9TwAAAAASUVORK5CYII=
           monthPicker.value = state.activeMonth;
           return;
         }
+        if (selectedProductForPurchase) {
+          selectedProductForPurchase = null;
+          lastComparison = [];
+          renderComparisonEmpty();
+        }
         collectDraftFromDOM();
         state.activeMonth = monthPicker.value;
         saveState();
         renderBudget();
         renderHistory();
+        renderComparisonHistory();
       });
 
       productRows.addEventListener("input", function () {
@@ -2924,6 +3309,11 @@ AAAGSURBVAMALDxudjPv9TwAAAAASUVORK5CYII=
         var addButton = event.target.closest("[data-add-selected-product]");
         if (addButton) {
           addSelectedProductToHistory();
+          return;
+        }
+        var cancelButton = event.target.closest("[data-cancel-selected-product]");
+        if (cancelButton) {
+          cancelSelectedProduct();
         }
       });
 
@@ -2950,6 +3340,7 @@ AAAGSURBVAMALDxudjPv9TwAAAAASUVORK5CYII=
       });
 
       clearMonthBtn.addEventListener("click", clearCurrentMonth);
+      clearComparisonsMonthBtn.addEventListener("click", clearComparisonsCurrentMonth);
       exportPdfBtn.addEventListener("click", exportPdfReport);
       exportBtn.addEventListener("click", exportData);
       importBtn.addEventListener("click", function () {
